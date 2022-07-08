@@ -1,0 +1,626 @@
+---
+title: "TRABAJO_FINAL"
+autor: "Jean Carlo Briceño Enriquez"
+date: '2022-07-08'
+output:
+  rmdformats::readthedown:
+    code_folding: show
+  html_document:
+    df_print: paged
+  lightbox: yes
+  toc: yes
+  toc_depth: 5
+  toc_float:
+    collapsed: no
+    smooth_scrool: yes
+  thumbnails: yes
+  self_contained: yes
+---
+
+```{r setup, include=FALSE, message=FALSE, echo=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+**REPOSITORIO GITHUB: https://github.com/jean27272727/Trabajo-Final.git**
+
+```{r message=FALSE, echo=FALSE, include=FALSE}
+library(rio)
+library(Rmisc)
+library (stargazer)
+library(moments)
+library(DescTools)
+library(BBmisc)
+library(cluster)
+library(factoextra)
+
+#dato: el funcionamiento del gobierno como variable dependiente. 
+```
+
+**Importamos nuestra base de datos principal del repositorio**
+```{r}
+TRABAJO1 =import("https://github.com/jean27272727/Trabajo-Final/blob/main/TRABAJO1.xlsx?raw=true")
+```
+
+```{r message=FALSE, echo=FALSE, include=FALSE}
+export(TRABAJO1, "TRABAJO1.csv")
+TRABAJO1= import("TRABAJO1.csv", encoding = "UTF-8")
+head(TRABAJO1)
+TRABAJO1$pais= substr(TRABAJO1$pais, 3, 100)
+```
+
+
+
+# INTRODUCCIÓN Y OBJETIVOS
+
+El presente trabajo tiene como objetivo presentar la regresión existente entre la función del gobierno, como la variable dependiente, y diferentes tipos de variables que pueden llegar a afectarla Y predecirla en futuros casos no particulares. En este sentido, dichas variables independientes son: participación política, cultura política y libertades civiles. Para dar explicación a ello se creó diferentes tipos de regresiones múltiples incluyendo dos o mas de dichas variables independientes. Además, se presenta dos escalas de clusterización. En primer lugar, sobre una sola base de datos; y en segundo lugar, sobre dos base de datos. Finalmente, se pretende la creacion de un modelo de factorizacion. 
+
+# MARCO TEÓRICO
+
+En el presente trabajo se pretende explicar a traves de Las variables independientes: participacion política, libertades civiles y cultura politica, la variable dependiente: el  funcionmiento del gobierno. Esto a traves de la data y un analisis similar hecho al indice de democracia compilado por Economist Intelligence Unit (EIU). Dicho estudio trata de evidenciar el estado de la democracia de 167 países,en base a el proceso electoral y el pluralismo, el funcionamiento del gobierno, la participacion política, la cultura política y las libertades civiles (en base a 60 preguntas). En relacion a ello, se pretende realizar un analisis similars con la diferencia de solo se usara 4 variables.
+
+
+En este sentido, a lo largo del trabajo se analiza si las tres variables independientes son suficientes y adecuadas para explicar el funcionamiento del gobierno. Por consiguiente, se demuestra que existe una correlacion muy fuerte entre las varaibles participacion politica y libertades civiles, por lo que si se mantiene como constante la participacion política deja de tener un efecto. Esto se explica posiblemente porque la participacion politica depende mucho de las libertades civiles del pais. A pesar que las unidades de analisis de las variables son diferentes (the economics, 2020). Para ello se crean modelos de regresion multiple con el objetivo de buscar el mejor modelo pertinente que logre explicar de mejor forma a la varaible dependiente. A partir de ello, se pretende clusterizar la base de datos principal para demostrar si es posible su agrupamiento en base a tres diferentes pruebas: Agnes, Pam y Diana. Una vez realizado ello, se presenta una data secundaria para aplicar un merge sobre la data principal para probar si es posible clusterizar y factorizar, según los factores correspondientes que se presentaran a lo largo del presente trabajo.  
+
+
+# ANÁLISIS DE REGRESIÓN
+
+Para el proceso de análisis de regresión, se tomó en consideración realizar cuatro diferentes modelos: 
+
+## Relación 1: 2 Independientes
+
+### *Modelo 4: Relación entre funcionamiento_del_gobierno, participación política y libertades civiles*
+```{r message=FALSE, echo=FALSE}
+modelo4= lm(TRABAJO1$funcionamiento_del_gobierno~TRABAJO1$participacion_politica+TRABAJO1$libertades_civiles)
+summary(modelo4)
+```
+
+### *Modelo 5: Relación entre funcionamiento_del_gobierno, participación política, libertades civiles y cultura política*
+
+
+Regla de control: mientras agregue más variables siempre tiene que aumentar. La variable participación política no aporta al modelo porque mi r2 ajustado disminuye.
+
+```{r message=FALSE, echo=FALSE}
+modelo5 = lm(TRABAJO1$funcionamiento_del_gobierno~TRABAJO1$participacion_politica+TRABAJO1$libertades_civiles+TRABAJO1$cultura_politica)
+summary(modelo5)
+```
+
++ La variable participación política puede ser una variable espuria (no tiene nada que ver) o tal vez dicha variable esta incluida en las otras dos.
+
+#### Explicación del porqué de la caída del modelo donde están incluidas la participación política y las libertades civiles
+```{r message=FALSE, echo=FALSE}
+cor.test(TRABAJO1$participacion_politica,TRABAJO1$libertades_civiles)
+```
+
+*Existe una correlacion muy fuerte entre las varaibles participacion politica y libertades civiles. La correalcion es 0.7924591. En este sentido, si se mantiene como constante (todos los paises tienen el mismo nivel) la participacion política deja de tener un efecto. Esto se explica posiblemente porque la participacion politica depende mucho de las libertades civiles del pais. Ademas, las unidades de analisis de las variables son diferentes (the economics, 2020).*
+
+#### Relación donde están incluidas libertades civiles y participación política
+```{r message=FALSE, echo=FALSE}
+library(stargazer)
+stargazer(modelo4,modelo5,type = "text",no.space = F,digits =3,digit.separator="")
+```
+
+### *Modelo 6: Relación entre funcionamiento_del_gobierno, libertades civiles y cultura política*
+```{r message=FALSE, echo=FALSE}
+modelo6= lm(TRABAJO1$funcionamiento_del_gobierno~+TRABAJO1$libertades_civiles+TRABAJO1$cultura_politica)
+summary(modelo6)
+```
++ Según el p-valor de cada una de mis variables aportan a mi modelo.Ademas, el  p-value general < 2.2e-16, es menor a 0,05. En este sentido, se rechaza la hipótesis nula y se concluye que el modelo sí es valido.
+
++ El R-cuadrado explica un 72,9%
+
+## Relación  2: 3 Independientes
+
+### *Modelo 7: Relación entre funcionamiento_del_gobierno, participación política y cultura política*
+
+```{r message=FALSE, echo=FALSE}
+modelo7= lm(TRABAJO1$funcionamiento_del_gobierno~+TRABAJO1$participacion_politica+TRABAJO1$cultura_politica)
+summary(modelo7)
+```
++ Según mi p-valor de cada una de mis variables aportan a mi modelo.ademas, el  p-value general < 2.2e-16, es menor a 0,05. Entonces, se rechaza la hipótesis nula y se concluye que el modelo sí es valido.
+
++ El R-cuadrado explica un 58,64%
+
+## Nivel explicativo de ambos modelos
+```{r message=FALSE, echo=FALSE}
+tanova=anova(modelo6, modelo7)
+stargazer(tanova,type = "text", summary = F, title = "Table de Análisis")
+```
+## Ecuación de regresión del modelo óptimo
+
+**Coeficientes**
+```{r message=FALSE, echo=FALSE}
+modelo6$coefficients
+```
+
+**FORMULA**   
+*Funcionamiento del gobierno=  -0.4333345 + 0.6941675(libertades civiles)+ 0.2485963(cultura política)*
+
+## Conclusión
+
+A partir del análisis entre el modelo 6 y 7 se concluye que el modelo 6 es más explicativo (explica mejor el funcionamiento del gobierno) que el modelo 7, en base a su r2, y presenta menor error estandar residual. En este sentido, se trabajará con el modelo 6. Es por ello que se procede a diagnosticar la regresion de dicho modelo para demostrar que es adecuado. Ver anexo 1.
+
+
+
+# ANÁLISIS DE CLUSTER
+
+## Análisis de conglomerado
+
+**Preparación de la data para ser clusterizada**
+```{r}
+library(cluster)
+dataclous= TRABAJO1 [,-1]
+row.names(dataclous)=TRABAJO1$pais
+g.dist = daisy(dataclous, metric="gower")
+```
+
+### Cuadro de correlaciones en anexos
+
+#### *Para PAM*
+```{r message=FALSE, echo=FALSE}
+library(factoextra)
+fviz_nbclust(dataclous, pam,diss=g.dist,method = "gap_stat",k.max = 10,verbose = F)
+```
+ 
+#### *Para Agnes*
+```{r message=FALSE, echo=FALSE}
+fviz_nbclust(dataclous, hcut,diss=g.dist,method = "gap_stat",k.max = 10,verbose = F,hc_func = "agnes")
+```
+
+#### *Para DIANA*
+```{r message=FALSE, echo=FALSE}
+fviz_nbclust(dataclous, hcut,diss=g.dist,method = "gap_stat",k.max = 10,verbose = F,hc_func = "diana")
+```
+
+Según las tres pruebas realizadas, es mejor clusterizar en base a 4 grupos, a pesar de que me recomiendan entre 4 y 6. En este sentido, se procede a graficar según dichas pruebas. 
+
+```{r message=FALSE, echo=FALSE, include=FALSE}
+###pam
+set.seed(123)
+grupos=4 
+res.pam=pam(g.dist,k = grupos,cluster.only = F)
+dataclous$pam=res.pam$cluster
+
+###agnes
+res.agnes<- hcut(g.dist, k =grupos,hc_func='agnes',hc_method = "ward.D")
+dataclous$agnes=res.agnes$cluster
+
+### diana
+res.diana <- hcut(g.dist, k = grupos,hc_func='diana')
+dataclous$diana=res.diana$cluster
+```
+
+#### *Gráfico según pruebas*
+
+*Se utiliza AGNES, fijarse en el Anexo 2
+```{r message=FALSE, echo=FALSE}
+fviz_silhouette(res.agnes)
+```
+
+### *Casos MAL clusterizados (silueta negativa)*
+```{r message=FALSE, echo=FALSE, include=FALSE}
+library(magrittr)
+```
+
+```{r message=FALSE, echo=FALSE, include=FALSE}
+silPAM=data.frame(res.pam$silinfo$widths)
+silPAM$country=row.names(silPAM)
+poorPAM=silPAM[silPAM$sil_width<0,'country']%>%sort()
+
+silAGNES=data.frame(res.agnes$silinfo$widths)
+silAGNES$country=row.names(silAGNES)
+poorAGNES=silAGNES[silAGNES$sil_width<0,'country']%>%sort()
+
+silDIANA=data.frame(res.diana$silinfo$widths)
+silDIANA$country=row.names(silDIANA)
+poorDIANA=silDIANA[silDIANA$sil_width<0,'country']%>%sort()
+```
+
+```{r message=FALSE, echo=FALSE, include=FALSE}
+library("qpcR") 
+```
+
+```{r message=FALSE, echo=FALSE}
+mal_Clus=as.data.frame(qpcR:::cbind.na(poorPAM, poorAGNES,poorDIANA))
+mal_Clus
+```
+
+**Podemos usar teoría de conjuntos para ver los casos mal clusterizados en todas las técnicas**
+```{r message=FALSE, echo=FALSE}
+intersect(poorPAM,poorAGNES)
+
+setdiff(poorAGNES,poorPAM)
+```
+
+#### Graficamos según AGNES
+```{r message=FALSE, echo=FALSE}
+original=aggregate(.~ pam, data=dataclous,mean)
+original
+```
+
+```{r message=FALSE, echo=FALSE, include=FALSE}
+dataclous$agnes=dplyr::recode(dataclous$pam, `3` = 1, `4`=2,`2`=3,`1`=4)
+```
+
+**Proyectando los casos en dos dimensiones**
+```{r message=FALSE, echo=FALSE}
+proyeccion = cmdscale(g.dist, k=2,add = T) # k es la cantidad de dimensiones
+dataclous$dim1 <- proyeccion$points[,1]
+dataclous$dim2 <- proyeccion$points[,2]
+base= ggplot(dataclous,aes(x=dim1, y=dim2,label=row.names(dataclous))) 
+base + geom_text(size=2, aes(color=as.factor(diana)))  + labs(title = "AGNES") 
+```
+
+
+## Clusterización de DATA amiga
+
+### *1. Análisis y limpieza de la DATA amiga*
+
+#### Importamos la DATA
+```{r message=FALSE, echo=FALSE, include=FALSE}
+library(rio)
+data_marco= import("DATA1.xlsx")
+names(data_marco)
+data_marco=data_marco[ ,-1]
+```
+
+```{r}
+str(data_marco)
+```
+
+#### Borramos datos perdidos
+```{r message=FALSE, echo=FALSE, include=FALSE}
+library(stringr)
+```
+
+```{r message=FALSE, echo=FALSE, include=FALSE}
+data_marco$handwashing = as.numeric(data_marco$handwashing)
+data_marco$mortality_rate = as.numeric(data_marco$mortality_rate)
+data_marco$incidence_tuberculosis = as.numeric(data_marco$incidence_tuberculosis)
+```
+```{r}
+data_marco= na.omit(data_marco)
+```
+
+#### Exportación de la DATA
+```{r}
+export(data_marco,"data_marco.xlsx")
+```
+
+#### Renombramos las variables
+```{r}
+colnames(data_marco)=c("pais","Acceso_al_lavado_de_manos","tasa_de_mortalidad","incidencia_de_tuberculosis")
+```
+
+### *2. Combinación de las datas*
+```{r message=FALSE, echo=FALSE, include=FALSE}
+merge(TRABAJO1, data_marco,"pais")
+merge(TRABAJO1, data_marco,by="pais", sort=F)
+merge(TRABAJO1, data_marco,by="pais", all.x=TRUE)
+```
+```{r}
+Data_claus=merge(TRABAJO1,data_marco, "pais")
+```
+
+
+### *3. Graficamos el merge*
+
+```{r message=FALSE, echo=FALSE, include=FALSE}
+boxplot(Data_claus[,-1])
+```
+
+```{r message=FALSE, echo=FALSE}
+boxplot(normalize(Data_claus[,-1],method='standardize'))
+Data_claus[,-1]=normalize(Data_claus[,-1],method='standardize')
+```
+
+*Cuadro de correlaciones en anexos
+```{r message=FALSE, echo=FALSE, include=FALSE}
+cor(Data_claus[,-1])
+Data_claus$Acceso_al_lavado_de_manos=-1*Data_claus$Acceso_al_lavado_de_manos
+```
+
+### *4. Clusterización*
+
+Por la forma en que se configura la clusterización, es necesario eliminar la columna que lleva el nombre de los páises.
+```{r message=FALSE, echo=FALSE, include=FALSE}
+row.names(Data_claus)=Data_claus$country
+Data_claus=Data_claus[,-1]
+```
+
+#### Graficamos
+
+```{r message=FALSE, echo=FALSE, include=FALSE}
+g.dist = daisy(Data_claus, metric="gower")
+```
+
+```{r message=FALSE, echo=FALSE}
+fviz_nbclust(Data_claus, hcut,diss=g.dist,method ="gap_stat",k.max =10,verbose =F,hc_func ="agnes")
+```
+
+```{r message=FALSE, echo=FALSE, include=FALSE}
+###pam
+set.seed(123)
+grupos=2
+res.pam1=pam(g.dist,k = grupos,cluster.only =F)
+Data_claus$pam1=res.pam1$cluster
+
+###agnes
+res.agnes1<- hcut(g.dist, grupos,hc_func='agnes',hc_method ="ward.D")
+Data_claus$agnes1=res.agnes1$cluster
+
+### diana
+res.diana1 <- hcut(g.dist, k = grupos,hc_func='diana')
+Data_claus$diana1=res.diana1$cluster
+```
+
+#### Se observa en la siguiente proyección, los dos clusters seleccionados:
+
+```{r message=FALSE, echo=FALSE}
+proyeccion = cmdscale(g.dist, k=2,add =T)
+Data_claus$dim1 <- proyeccion$points[,1]
+Data_claus$dim2 <- proyeccion$points[,2]
+base= ggplot(Data_claus,aes(x=dim1, y=dim2,label=row.names(Data_claus)))
+base + geom_text(size=2, aes(color=as.factor(agnes1))) + labs(title ="AGNES")
+```
+
+
+
+# ANÁLISIS FACTORIAL
+
+## Análisis factorial exploratorio
+
+### *Exploración de correlación*
+
+```{r message=FALSE, echo=FALSE, include=FALSE}
+library(haven)
+library(GPArotation)
+library(dplyr)
+library(RcmdrMisc)
+library(corrplot)
+library(ggplot2)
+library(matrixcalc)
+library(Rmisc)
+library (stargazer)
+library(moments)
+library(DescTools)
+library(BBmisc)
+library(cluster)
+library(factoextra)
+library(qpcR)
+library(polycor)
+library(magrittr)
+library(psych)
+library(lavaan)
+```
+
+#### Matriz de correlación
+```{r message=FALSE, echo=FALSE}
+library(ggcorrplot)
+
+#se eliminan las variables que no se utilizarán
+Data_claus1= select(Data_claus, -pam1, -agnes1, -diana1, -dim1, -dim2)
+
+corMatrix1=polycor::hetcor(Data_claus1)$correlations
+ggcorrplot(corMatrix1)
+```
+según la matriz podemos observar que existen algunos grupos con buena correlacion por lo que existe la posibilidad de hacer un analisis factorial. 
+#### Pruebas de factorización
+
+**Test KMO**
+```{r message=FALSE, echo=FALSE}
+psych::KMO(corMatrix1)
+```
+
+El kmo es mayor a 0,5 por tanto se puede realizar el analisis factorial con las variables.
+
+**Test de Bartlett**
+```{r message=FALSE, echo=FALSE}
+cortest.bartlett(corMatrix1,n=nrow(Data_claus))$p.value>0.05 
+```
+
+Sí se pueden realizar factores porque sale menor a 0,05. Esto quiere decir que solo existe correlación perfecta igual 1 en la matriz de identidad.
+
+#### Matriz singular
+```{r message=FALSE, echo=FALSE}
+is.singular.matrix(corMatrix1)
+```
+Gracias a los datos de las pruebas realizadas se concluye que es posible determinar un solo factor o concepto.
+
+#### Gráfico de sedimentación
+```{r message=FALSE, echo=FALSE}
+fa.parallel(Data_claus,fm = 'ML', fa = 'fa',correct = T)
+```
+
+Según el gráfico, el número de factores que podemos obtener del análisis es 2. 
+
+### *Factorización*
+
+**Procedemos a realizar las rotaciones**
+```{r message=FALSE, echo=FALSE, include=FALSE}
+library(GPArotation)
+resfa1 <- fa(Data_claus1,
+            nfactors = 2,
+            cor = 'mixed',
+            rotate = "varimax",
+            fm="minres")
+```
+
+```{r}
+print(resfa1$loadings)
+```
+En lineas generales los factores que obtenemos contienen el 0.575 de toda la informacion de las variables. 
+**Visualizamos las cargas factoriales**
+```{r message=FALSE, echo=FALSE}
+print(resfa1$loadings,cutoff = 0.5)
+```
+
+### *Resultado visual*
+```{r message=FALSE, echo=FALSE}
+fa.diagram(resfa1)
+```
+
+### *Aporte de las variables*
+
+**Según comunalidad**
+```{r message=FALSE, echo=FALSE}
+sort(resfa1$communality)
+```
+
+**Según complejidad**
+```{r message=FALSE, echo=FALSE}
+sort(resfa1$complexity)
+```
+
+```{r message=FALSE, echo=FALSE, include=FALSE}
+as.data.frame(resfa1$scores)%>%head()
+names(Data_claus1)
+```
+
+
+## Análisis factorial confirmatorio
+
+### *Creación del modelo*
+```{r message=FALSE, echo=FALSE}
+model1 <- ' EstabilidadPOL =~funcionamiento_del_gobierno + participacion_politica + cultura_politica + libertades_civiles
+            SaludBasica=~Acceso_al_lavado_de_manos + incidencia_de_tuberculosis + tasa_de_mortalidad'
+model1
+```
+
+```{r message=FALSE, echo=FALSE, include=FALSE}
+data_norm1=as.data.frame(scale(Data_claus1))
+```
+
+```{r message=FALSE, echo=FALSE, include=FALSE}
+cfa_fit1 <- cfa(model1, data_norm1, 
+           std.lv=TRUE,  
+           missing="fiml")
+
+summary(model1,fit.measures= F)
+```
+
+```{r message=FALSE, echo=FALSE, include=FALSE}
+allParamCFA1=parameterEstimates(cfa_fit1,standardized = T)
+allFitCFA1=as.list(fitMeasures(cfa_fit1))
+```
+
+### *Relación de las variables frente al concepto*
+```{r message=FALSE, echo=FALSE}
+allParamCFA1[allParamCFA1$op=="=~",]
+```
+
+### *Pruebas de confirmación*
+
+#### CHISQUARE
+
+```{r message=FALSE, echo=FALSE}
+allFitCFA1[c("chisq", "df", "pvalue")] # pvalue>0.05, 
+```
+el Pvalor es menor a 0,05 por consiguiente la prueba demuestra que los factores incluidos en el modelo no son adecuados. 
+#### TUCKER LEWI
+```{r message=FALSE, echo=FALSE}
+allFitCFA1$tli # > 0.90   
+```
+Como el resultado es mayor a 0,90, por lo tanto según dicha prueba, los factores obtenidos son adecuados.
+#### RAIZ DEL ERROR
+```{r message=FALSE, echo=FALSE}
+allFitCFA1[c('rmsea.ci.lower','rmsea' ,'rmsea.ci.upper')] 
+```
+La Raíz del error cuadrático medio de aproximación no es menor a 0.05.
+
+### *Estandarizamos los factores*
+```{r}
+scorescfa1=normalize(lavPredict(cfa_fit1),
+                    method = "range", 
+                    margin=2, # by column
+                    range = c(0, 10))
+```
+En pocas palabras, en base a las pruebas realizas se evidencia que no es posible resumir los resultados de los analisis porque los factores no son adecuados. por lo cual según el analisis exploratorio se evidencia que no es posible hacer el analisis factorial. 
+
+# ANEXOS
+
+## *Anexo 1: Diagnóstico de la regresión del modelo 6*
+
+### Linealidad
+```{r message=FALSE, echo=FALSE}
+plot(modelo6, 1)
+```
+
+La linea tienden a la horizontalidad por lo cual es aceptable.
+
+### Homocedasticidad
+```{r message=FALSE, echo=FALSE}
+plot(modelo6, 3)
+
+```
+
+Como la linea roja tiende a la horizontalidad el modelo es aceptable. 
+
+### Normalidad de residuos
+```{r message=FALSE, echo=FALSE}
+plot(modelo6, 2)
+```
+
+Los puntos están cerca a la diagonal, por tanto la diferencia entre apropiaciondolar y apropiaciondolar se distribuye de manera normal
+
+```{r message=FALSE, echo=FALSE}
+shapiro.test(modelo6$residuals)
+```
+
+### Multicolinealidad
+```{r message=FALSE, echo=FALSE, include=FALSE}
+library(DescTools)
+```
+
+```{r message=FALSE, echo=FALSE}
+VIF(modelo6)
+```
+
+Como los valores son menores a 5 se concluye que no presenta multicolinealidad.
+
+### Valores y casos influyentes
+
+**Valores influyentes**
+```{r message=FALSE, echo=FALSE}
+plot(modelo6, 5)
+```
+
+**Casos influyentes**
+```{r message=FALSE, echo=FALSE}
+checkmodelo6=as.data.frame(influence.measures(modelo6)$is.inf)
+head(checkmodelo6)
+```
+
+**Resultado**
+```{r message=FALSE, echo=FALSE}
+checkmodelo6[checkmodelo6$cook.d & checkmodelo6$hat,]
+```
+
+Se concluye que no presenta valores influyentes. 
+
+## *Anexo 2: *
+
+```{r message=FALSE, echo=FALSE}
+fviz_silhouette(res.pam)
+```
+
+### ¿?
+```{r message=FALSE, echo=FALSE}
+fviz_silhouette(res.agnes)
+```
+
+
+```{r message=FALSE, echo=FALSE}
+fviz_silhouette(res.diana)
+```
+
+
+## *Anexo 3: *
+```{r message=FALSE, echo=FALSE}
+fviz_silhouette(res.pam1)
+```
+
+```{r message=FALSE, echo=FALSE}
+fviz_silhouette(res.diana1)
+```
+
+En líneas generales, el método AGNES es mejor porque presenta un mejor resultado: su promedio es 0,32; por ende presenta una mejor conglomeración.
